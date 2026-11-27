@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyFlash AI — Notes to Flashcards</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>StudyFlash AI</h1>
+      <p>Paste your textbook notes or formulas to generate active-recall flashcards.</p>
+    </header>
+
+    <section class="input-box">
+      <textarea id="notesInput" rows="7" placeholder="Paste your Physics, Chemistry, or language notes here..."></textarea>
+      <div class="actions">
+        <button id="generateBtn">Generate 5 Flashcards</button>
+        <button id="clearBtn" class="secondary">Clear</button>
+      </div>
+    </section>
+
+    <div id="statusMsg" class="status"></div>
+    <section id="cardsGrid" class="cards-grid"></section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
