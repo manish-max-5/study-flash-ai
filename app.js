@@ -1,158 +1,48 @@
-const notesInput = document.getElementById("notesInput");
-const generateBtn = document.getElementById("generateBtn");
-const clearBtn = document.getElementById("clearBtn");
-const statusMsg = document.getElementById("statusMsg");
-const modeBar = document.getElementById("modeBar");
-const flashcardsModeBtn = document.getElementById("flashcardsModeBtn");
-const quizModeBtn = document.getElementById("quizModeBtn");
-const copyAllBtn = document.getElementById("copyAllBtn");
-const cardsGrid = document.getElementById("cardsGrid");
-
-let currentCards = [];
-
-function renderFlashcards() {
-  flashcardsModeBtn.classList.add("active");
-  quizModeBtn.classList.remove("active");
-  cardsGrid.innerHTML = "";
-
-  currentCards.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    let showingAnswer = false;
-
-    const updateCard = () => {
-      card.innerHTML = `
-        <div class="label">Card ${index + 1} • ${showingAnswer ? "Answer (Tap to flip back)" : "Question (Tap to reveal)"}</div>
-        <div class="text">${showingAnswer ? item.answer : item.question}</div>
-      `;
-    };
-
-    updateCard();
-    card.addEventListener("click", () => {
-      showingAnswer = !showingAnswer;
-      updateCard();
-    });
-
-    cardsGrid.appendChild(card);
-  });
-}
-
-function renderQuiz() {
-  quizModeBtn.classList.add("active");
-  flashcardsModeBtn.classList.remove("active");
-  cardsGrid.innerHTML = "";
-
-  let score = 0;
-  let answered = 0;
-  statusMsg.textContent = `Quiz Mode: Score ${score} / ${currentCards.length}`;
-
-  currentCards.forEach((item, index) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.cursor = "default";
-
-    card.innerHTML = `
-      <div class="label">Question ${index + 1}</div>
-      <div class="text">${item.question}</div>
-      <div class="quiz-options"></div>
-    `;
-
-    const optionsBox = card.querySelector(".quiz-options");
-    const options = item.options || [item.answer];
-
-    options.forEach((opt) => {
-      const btn = document.createElement("button");
-      btn.className = "option-btn";
-      btn.textContent = opt;
-
-      btn.addEventListener("click", () => {
-        if (optionsBox.dataset.locked === "true") return;
-        optionsBox.dataset.locked = "true";
-        answered++;
-
-        const isCorrect = opt.trim().toLowerCase() === item.answer.trim().toLowerCase();
-        if (isCorrect) {
-          btn.classList.add("correct");
-          score++;
-        } else {
-          btn.classList.add("wrong");
-          Array.from(optionsBox.children).forEach((b) => {
-            if (b.textContent.trim().toLowerCase() === item.answer.trim().toLowerCase()) {
-              b.classList.add("correct");
-            }
-          });
-        }
-
-        statusMsg.textContent =
-          answered === currentCards.length
-            ? `Quiz Complete! Final Score: ${score} / ${currentCards.length}`
-            : `Quiz Mode: Score ${score} / ${currentCards.length}`;
-      });
-
-      optionsBox.appendChild(btn);
-    });
-
-    cardsGrid.appendChild(card);
-  });
-}
-
-generateBtn.addEventListener("click", async () => {
-  const text = notesInput.value.trim();
-  if (!text) {
-    statusMsg.textContent = "Please paste some study notes first!";
-    return;
-  }
-
-  generateBtn.disabled = true;
-  generateBtn.textContent = "Generating...";
-  statusMsg.textContent = "AI is reading your notes and building flashcards...";
-  cardsGrid.innerHTML = "";
-  modeBar.classList.add("hidden");
-
+export async function POST(request) {
   try {
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ notes: text })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Failed to generate flashcards.");
+    const { notes, count = 5 } = await request.json();
+    if (!notes || !notes.trim()) {
+      return Response.json({ error: "No notes provided." }, { status: 400 });
     }
 
-    currentCards = data.cards;
-    modeBar.classList.remove("hidden");
-    statusMsg.textContent = `Generated ${currentCards.length} flashcards! Tap any card to flip.`;
-    renderFlashcards();
-  } catch (error) {
-    statusMsg.textContent = `Error: ${error.message}`;
-  } finally {
-    generateBtn.disabled = false;
-    generateBtn.textContent = "Generate 5 Flashcards";
+    const cardCount = count === 10 ? 10 : 5;
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return Response.json({ error: "Server API key is not configured." }, { status: 500 });
+    }
+
+    const prompt = `You are a study assistant for a 10th-grade SSC board student. Extract ${cardCount} key exam-focused concepts from the study notes below and return ONLY a valid JSON array of objects, with no markdown backticks or extra text. Each object must have exact keys: "question", "answer", and "options" (an array of 4 short multiple-choice strings where one matches the answer).
+
+Study Notes:
+${notes}`;
+
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        })
+      }
+    );
+
+    const data = await geminiRes.json();
+    if (!geminiRes.ok) {
+      return Response.json(
+        { error: data.error?.message || "Gemini API error" },
+        { status: geminiRes.status }
+      );
+    }
+
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
+    const cards = JSON.parse(rawText);
+
+    return Response.json({ cards });
+  } catch (err) {
+    return Response.json({ error: err.message || "Something went wrong." }, { status: 500 });
   }
-});
-
-flashcardsModeBtn.addEventListener("click", () => {
-  statusMsg.textContent = `Showing ${currentCards.length} flashcards. Tap any card to flip.`;
-  renderFlashcards();
-});
-
-quizModeBtn.addEventListener("click", renderQuiz);
-
-copyAllBtn.addEventListener("click", async () => {
-  if (!currentCards.length) return;
-  const formatted = currentCards
-    .map((c, i) => `Q${i + 1}: ${c.question}\nA${i + 1}: ${c.answer}`)
-    .join("\n\n");
-  await navigator.clipboard.writeText(formatted);
-  statusMsg.textContent = "Copied full Study Pack to clipboard!";
-});
-
-clearBtn.addEventListener("click", () => {
-  notesInput.value = "";
-  cardsGrid.innerHTML = "";
-  statusMsg.textContent = "";
-  modeBar.classList.add("hidden");
-  currentCards = [];
-});
+}
