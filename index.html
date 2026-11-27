@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyFlash AI — Notes to Flashcards & Quiz</title>
+  <title>StudyFlash AI — SSC Notes to Flashcards & Quiz</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
     <header>
       <h1>StudyFlash AI</h1>
-      <p>Paste your textbook notes or formulas to generate active-recall flashcards and a practice quiz.</p>
+      <p>Turn textbook notes into active-recall flashcards &amp; 10th-class practice quizzes.</p>
     </header>
 
     <section class="input-box">
-      <textarea id="notesInput" rows="7" placeholder="Paste your Physics, Chemistry, or language notes here..."></textarea>
+      <textarea id="notesInput" rows="6" placeholder="Paste your Physics, Chemistry, Social, or language notes here..."></textarea>
       <div class="actions">
-        <button id="generateBtn">Generate 5 Flashcards</button>
+        <select id="countSelect" aria-label="Number of cards">
+          <option value="5">5 Cards (Quick Drill)</option>
+          <option value="10">10 Cards (Full Chapter)</option>
+        </select>
+        <button id="generateBtn">Generate Study Set</button>
         <button id="clearBtn" class="secondary">Clear</button>
       </div>
     </section>
@@ -24,9 +28,10 @@
     <div id="statusMsg" class="status"></div>
 
     <div id="modeBar" class="mode-bar hidden">
-      <button id="flashcardsModeBtn" class="mode-btn active">Flashcards Mode</button>
-      <button id="quizModeBtn" class="mode-btn">Quiz Mode (5 MCQs)</button>
+      <button id="flashcardsModeBtn" class="mode-btn active">Flashcards</button>
+      <button id="quizModeBtn" class="mode-btn">Quiz Mode</button>
       <button id="copyAllBtn" class="secondary">Copy Study Pack</button>
+      <button id="shareAppBtn" class="secondary">Share App Link</button>
     </div>
 
     <section id="cardsGrid" class="cards-grid"></section>
