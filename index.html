@@ -1,39 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyFlash AI — SSC Notes to Flashcards & Quiz</title>
+  <title>StudyFlash AI — TS SSC Smart Revision Engine</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
-    <header>
-      <h1>StudyFlash AI</h1>
-      <p>Turn textbook notes into active-recall flashcards &amp; 10th-class practice quizzes.</p>
+    <!-- Top Header & Gamification Bar -->
+    <header class="app-header">
+      <div class="brand-row">
+        <div>
+          <span class="badge">TS SSC 10TH EDITION</span>
+          <h1>StudyFlash <span class="gradient-text">AI</span></h1>
+        </div>
+        <div class="stats-controls">
+          <div class="xp-pill" title="Earn +10 XP for every card mastered!">
+            <span id="xpCount">⚡ 0 XP</span>
+          </div>
+          <button id="themeToggleBtn" class="icon-btn" aria-label="Toggle Light/Dark Theme" title="Switch Theme">☀️</button>
+        </div>
+      </div>
+      <p class="subtitle">Snap textbook pages, upload PDFs, or type a chapter name to generate board-exam flashcards &amp; quizzes.</p>
     </header>
 
-    <section class="input-box">
-      <textarea id="notesInput" rows="6" placeholder="Paste your Physics, Chemistry, Social, or language notes here..."></textarea>
-      <div class="actions">
-        <select id="countSelect" aria-label="Number of cards">
-          <option value="5">5 Cards (Quick Drill)</option>
-          <option value="10">10 Cards (Full Chapter)</option>
-        </select>
-        <button id="generateBtn">Generate Study Set</button>
-        <button id="clearBtn" class="secondary">Clear</button>
+    <!-- Input & Multimodal Upload Card -->
+    <section class="panel input-panel">
+      <div class="upload-bar">
+        <label for="fileUpload" class="upload-label">
+          <span>📷 Snap / Upload Image or PDF</span>
+          <input type="file" id="fileUpload" accept="image/*,application/pdf" hidden />
+        </label>
+        <div id="filePreviewChip" class="file-chip hidden">
+          <span id="fileNameText">file.pdf</span>
+          <button type="button" id="removeFileBtn" class="chip-close">✕</button>
+        </div>
+      </div>
+
+      <textarea
+        id="notesInput"
+        rows="4"
+        placeholder="Paste notes OR just type a TS SSC chapter name (e.g., 'Class 10 Biology Lesson 1 Nutrition' or 'Hindi Baraste Badal')..."
+      ></textarea>
+
+      <!-- SSC Exam Controls Grid -->
+      <div class="controls-grid">
+        <div class="control-group">
+          <label for="styleSelect">Question Pattern</label>
+          <select id="styleSelect">
+            <option value="flashcards">Quick Flashcards (Q&amp;A)</option>
+            <option value="1mark">1-Mark / Fill-in-the-Blanks</option>
+            <option value="2mark">2-Mark SSC Bullet Answers</option>
+            <option value="4mark">4-Mark Long Structured Answers</option>
+            <option value="assertion">Assertion &amp; Reason</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="langSelect">Language</label>
+          <select id="langSelect">
+            <option value="English">English</option>
+            <option value="Telugu">Telugu (తెలుగు)</option>
+            <option value="Hindi">Hindi (हिन्दी)</option>
+            <option value="Bilingual (English + Telugu)">English + Telugu Meanings</option>
+            <option value="Bilingual (English + Hindi)">English + Hindi Meanings</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label for="countSelect">Deck Size</label>
+          <select id="countSelect">
+            <option value="5">5 Cards (Quick Drill)</option>
+            <option value="10">10 Cards (Full Chapter)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="primary-actions">
+        <button id="generateBtn" class="btn-primary">✨ Generate Study Pack</button>
+        <button id="clearBtn" class="btn-secondary">Clear</button>
       </div>
     </section>
 
-    <div id="statusMsg" class="status"></div>
+    <div id="statusMsg" class="status-banner"></div>
 
-    <div id="modeBar" class="mode-bar hidden">
-      <button id="flashcardsModeBtn" class="mode-btn active">Flashcards</button>
-      <button id="quizModeBtn" class="mode-btn">Quiz Mode</button>
-      <button id="copyAllBtn" class="secondary">Copy Study Pack</button>
-      <button id="shareAppBtn" class="secondary">Share App Link</button>
-    </div>
+    <!-- Study Toolbar & Mastery Progress (Hidden until generated) -->
+    <section id="studyToolbar" class="panel toolbar-panel hidden">
+      <div class="progress-header">
+        <span id="masteryText">Mastered: 0 / 0</span>
+        <span id="weakCountText" class="weak-badge">To Revise: 0</span>
+      </div>
+      <div class="progress-track">
+        <div id="masteryBarFill" class="progress-fill" style="width: 0%"></div>
+      </div>
 
+      <div class="toolbar-buttons">
+        <button id="flashcardsModeBtn" class="mode-btn active">🗂️ Flashcards</button>
+        <button id="quizModeBtn" class="mode-btn">🎯 Quiz Mode</button>
+        <button id="shuffleBtn" class="btn-secondary">🔀 Shuffle</button>
+        <button id="weakFilterBtn" class="btn-secondary">🔥 Weak Only: OFF</button>
+        <button id="copyAllBtn" class="btn-secondary">📋 Copy Text</button>
+        <button id="pdfExportBtn" class="btn-secondary">📄 Save PDF</button>
+        <button id="shareAppBtn" class="btn-secondary">🔗 Share</button>
+      </div>
+    </section>
+
+    <!-- Cards / Quiz Output Grid -->
     <section id="cardsGrid" class="cards-grid"></section>
   </main>
 
