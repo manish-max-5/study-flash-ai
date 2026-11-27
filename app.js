@@ -28,18 +28,38 @@ function renderCards(cards) {
   });
 }
 
-generateBtn.addEventListener("click", () => {
+generateBtn.addEventListener("click", async () => {
   const text = notesInput.value.trim();
   if (!text) {
     statusMsg.textContent = "Please paste some study notes first!";
     return;
   }
 
-  statusMsg.textContent = "Preview mode: Showing sample flashcards (Day 3 connects live Gemini AI).";
-  renderCards([
-    { question: "Sample Q1: What is Ohm's Law?", answer: "V = I × R (Voltage equals Current times Resistance at constant temperature)." },
-    { question: "Sample Q2: What is the SI unit of electric charge?", answer: "Coulomb (C)." }
-  ]);
+  generateBtn.disabled = true;
+  generateBtn.textContent = "Generating...";
+  statusMsg.textContent = "AI is reading your notes and building flashcards...";
+  cardsGrid.innerHTML = "";
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notes: text })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to generate flashcards.");
+    }
+
+    statusMsg.textContent = `Generated ${data.cards.length} flashcards! Tap any card to flip.`;
+    renderCards(data.cards);
+  } catch (error) {
+    statusMsg.textContent = `Error: ${error.message}`;
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = "Generate 5 Flashcards";
+  }
 });
 
 clearBtn.addEventListener("click", () => {
