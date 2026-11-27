@@ -1,16 +1,17 @@
 export async function POST(request) {
   try {
-    const { notes } = await request.json();
+    const { notes, count = 5 } = await request.json();
     if (!notes || !notes.trim()) {
       return Response.json({ error: "No notes provided." }, { status: 400 });
     }
 
+    const cardCount = count === 10 ? 10 : 5;
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return Response.json({ error: "Server API key is not configured." }, { status: 500 });
     }
 
-    const prompt = `You are a study assistant for a 10th-grade student. Extract 5 key concepts from the study notes below and return ONLY a valid JSON array of objects, with no markdown backticks or extra text. Each object must have exact keys: "question", "answer", and "options" (an array of 4 short multiple-choice strings where one matches the answer).
+    const prompt = `You are a study assistant for a 10th-grade SSC board student. Extract ${cardCount} key exam-focused concepts from the study notes below and return ONLY a valid JSON array of objects, with no markdown backticks or extra text. Each object must have exact keys: "question", "answer", and "options" (an array of 4 short multiple-choice strings where one matches the answer).
 
 Study Notes:
 ${notes}`;
