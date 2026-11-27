@@ -2,11 +2,20 @@ const notesInput = document.getElementById("notesInput");
 const generateBtn = document.getElementById("generateBtn");
 const clearBtn = document.getElementById("clearBtn");
 const statusMsg = document.getElementById("statusMsg");
+const modeBar = document.getElementById("modeBar");
+const flashcardsModeBtn = document.getElementById("flashcardsModeBtn");
+const quizModeBtn = document.getElementById("quizModeBtn");
+const copyAllBtn = document.getElementById("copyAllBtn");
 const cardsGrid = document.getElementById("cardsGrid");
 
-function renderCards(cards) {
+let currentCards = [];
+
+function renderFlashcards() {
+  flashcardsModeBtn.classList.add("active");
+  quizModeBtn.classList.remove("active");
   cardsGrid.innerHTML = "";
-  cards.forEach((item, index) => {
+
+  currentCards.forEach((item, index) => {
     const card = document.createElement("div");
     card.className = "card";
     let showingAnswer = false;
@@ -28,6 +37,65 @@ function renderCards(cards) {
   });
 }
 
+function renderQuiz() {
+  quizModeBtn.classList.add("active");
+  flashcardsModeBtn.classList.remove("active");
+  cardsGrid.innerHTML = "";
+
+  let score = 0;
+  let answered = 0;
+  statusMsg.textContent = `Quiz Mode: Score ${score} / ${currentCards.length}`;
+
+  currentCards.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.cursor = "default";
+
+    card.innerHTML = `
+      <div class="label">Question ${index + 1}</div>
+      <div class="text">${item.question}</div>
+      <div class="quiz-options"></div>
+    `;
+
+    const optionsBox = card.querySelector(".quiz-options");
+    const options = item.options || [item.answer];
+
+    options.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.className = "option-btn";
+      btn.textContent = opt;
+
+      btn.addEventListener("click", () => {
+        if (optionsBox.dataset.locked === "true") return;
+        optionsBox.dataset.locked = "true";
+        answered++;
+
+        const isCorrect = opt.trim().toLowerCase() === item.answer.trim().toLowerCase();
+        if (isCorrect) {
+          btn.classList.add("correct");
+          score++;
+        } else {
+          btn.classList.add("wrong");
+          Array.from(optionsBox.children).forEach((b) => {
+            if (b.textContent.trim().toLowerCase() === item.answer.trim().toLowerCase()) {
+              b.classList.add("correct");
+            }
+          });
+        }
+
+        statusMsg.textContent =
+          answered === currentCards.length
+            ? `Quiz Complete! Final Score: ${score} / ${currentCards.length}`
+            : `Quiz Mode: Score ${score} / ${currentCards.length}`;
+      });
+
+      optionsBox.appendChild(btn);
+    });
+
+    cardsGrid.appendChild(card);
+  });
+}
+
 generateBtn.addEventListener("click", async () => {
   const text = notesInput.value.trim();
   if (!text) {
@@ -39,6 +107,7 @@ generateBtn.addEventListener("click", async () => {
   generateBtn.textContent = "Generating...";
   statusMsg.textContent = "AI is reading your notes and building flashcards...";
   cardsGrid.innerHTML = "";
+  modeBar.classList.add("hidden");
 
   try {
     const response = await fetch("/api/generate", {
@@ -52,8 +121,10 @@ generateBtn.addEventListener("click", async () => {
       throw new Error(data.error || "Failed to generate flashcards.");
     }
 
-    statusMsg.textContent = `Generated ${data.cards.length} flashcards! Tap any card to flip.`;
-    renderCards(data.cards);
+    currentCards = data.cards;
+    modeBar.classList.remove("hidden");
+    statusMsg.textContent = `Generated ${currentCards.length} flashcards! Tap any card to flip.`;
+    renderFlashcards();
   } catch (error) {
     statusMsg.textContent = `Error: ${error.message}`;
   } finally {
@@ -62,8 +133,26 @@ generateBtn.addEventListener("click", async () => {
   }
 });
 
+flashcardsModeBtn.addEventListener("click", () => {
+  statusMsg.textContent = `Showing ${currentCards.length} flashcards. Tap any card to flip.`;
+  renderFlashcards();
+});
+
+quizModeBtn.addEventListener("click", renderQuiz);
+
+copyAllBtn.addEventListener("click", async () => {
+  if (!currentCards.length) return;
+  const formatted = currentCards
+    .map((c, i) => `Q${i + 1}: ${c.question}\nA${i + 1}: ${c.answer}`)
+    .join("\n\n");
+  await navigator.clipboard.writeText(formatted);
+  statusMsg.textContent = "Copied full Study Pack to clipboard!";
+});
+
 clearBtn.addEventListener("click", () => {
   notesInput.value = "";
   cardsGrid.innerHTML = "";
   statusMsg.textContent = "";
+  modeBar.classList.add("hidden");
+  currentCards = [];
 });
