@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StudyFlash AI — Notes to Flashcards</title>
+  <title>StudyFlash AI — Notes to Flashcards & Quiz</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
     <header>
       <h1>StudyFlash AI</h1>
-      <p>Paste your textbook notes or formulas to generate active-recall flashcards.</p>
+      <p>Paste your textbook notes or formulas to generate active-recall flashcards and a practice quiz.</p>
     </header>
 
     <section class="input-box">
@@ -22,6 +22,13 @@
     </section>
 
     <div id="statusMsg" class="status"></div>
+
+    <div id="modeBar" class="mode-bar hidden">
+      <button id="flashcardsModeBtn" class="mode-btn active">Flashcards Mode</button>
+      <button id="quizModeBtn" class="mode-btn">Quiz Mode (5 MCQs)</button>
+      <button id="copyAllBtn" class="secondary">Copy Study Pack</button>
+    </div>
+
     <section id="cardsGrid" class="cards-grid"></section>
   </main>
 
